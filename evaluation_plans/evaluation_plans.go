@@ -25,47 +25,47 @@ var (
 		// For best results, ensure every assessment id is represented in this map
 		"CCC.SecMgmt.CN01.AR01": {
 			/* When a secret is stored, a rotation schedule MUST be configured
-with an interval of 90 days or less.
- */
+			with an interval of 90 days or less.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		"CCC.SecMgmt.CN01.AR02": {
 			/* When a scheduled rotation has not produced a new secret version
-within 24 hours of its due time, an alert MUST be published to a
-monitored channel.
- */
+			within 24 hours of its due time, an alert MUST be published to a
+			monitored channel.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		"CCC.SecMgmt.CN03.AR01": {
 			/* When a secret's access policy is configured, read permission on the
-secret value MUST NOT be granted to a wildcard principal.
- */
+			secret value MUST NOT be granted to a wildcard principal.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		"CCC.SecMgmt.CN03.AR02": {
 			/* When read permission on a secret value is granted, the grant MUST
-be scoped to the specific secret, vault, or tag-scoped set of
-secrets that the identity consumes.
- */
+			be scoped to the specific secret, vault, or tag-scoped set of
+			secrets that the identity consumes.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		"CCC.SecMgmt.CN03.AR03": {
 			/* When an identity is granted read permission on a secret value for
-consumption by a workload, that grant MUST NOT include permission
-to create a new version of the secret.
- */
+			consumption by a workload, that grant MUST NOT include permission
+			to create a new version of the secret.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		"CCC.SecMgmt.CN04.AR01": {
 			/* When a secret or secret version is deleted, the service MUST retain
-it in a recoverable state for at least 7 days before destruction.
- */
+			it in a recoverable state for at least 7 days before destruction.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		"CCC.SecMgmt.CN04.AR02": {
 			/* When a secret version is disabled or scheduled for destruction, an
-alert MUST be published to a monitored channel.
- */
+			alert MUST be published to a monitored channel.
+			*/
 			reusable_steps.NotImplemented,
 		},
 		// CCC.Core.Controls
