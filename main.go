@@ -48,8 +48,8 @@ func main() {
 		PluginUri:     "github.com/revanite-io/pvtr-aws-secmgmt",
 		// Publisher and License are inert at run time and required only to publish
 		// to grc.store: Publisher is your grc.store namespace, License an SPDX expression.
-		Publisher: "",
-		License:   "",
+		Publisher: "revanite-io",
+		License:   "Apache-2.0",
 	}
 	orchestrator.AddLoader(data.Loader)
 
