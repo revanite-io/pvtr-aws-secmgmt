@@ -11,6 +11,11 @@ builds:
     # pvtr publish looks for a binary named after the plugin id (PluginName in
     # main.go); the shipped file must match the entrypoint.
   - binary: pvtr-aws-secmgmt
+    # Reproducible: -trimpath and the commit date (not the build time) make
+    # every build of a tag byte-identical, so publish-plugin's rebuild is the
+    # same binary the GitHub release attested.
+    flags:
+      - -trimpath
     env:
       - CGO_ENABLED=0
     goos:
@@ -29,7 +34,7 @@ builds:
       - -X main.Version={{ .Version }}
       - -X main.VersionPostfix=
       - -X main.GitCommitHash={{ .Commit }}
-      - -X main.BuiltAt={{ .Date }}
+      - -X main.BuiltAt={{ .CommitDate }}
 
 archives:
   - formats: ["tar.gz"]
@@ -58,9 +63,6 @@ changelog:
   disable: true
 
 release:
-  # The release workflow's draft release owns the GitHub release; it refuses a
-  # config where GoReleaser would also create one.
-  disable: true
   mode: keep-existing
 
 universal_binaries:
