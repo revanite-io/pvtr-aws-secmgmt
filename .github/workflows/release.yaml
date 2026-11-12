@@ -1,0 +1,35 @@
+---
+name: "Release"
+on:
+  workflow_dispatch:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+jobs:
+  release:
+    # These templates are copied verbatim into generated plugins, where this
+    # job is correct. In the templates repo itself there is no Go code and no
+    # Makefile, so it can only fail. Skip it here, run it there.
+    if: ${{ !endsWith(github.repository, '/plugin-generator-templates') }}
+    permissions:
+      contents: write       # Create release and push tags
+      pull-requests: read   # Read PR labels for release-drafter
+      packages: write       # Push container image to ghcr.io
+      id-token: write       # Federate for artifact attestation
+      attestations: write   # Generate build provenance attestations
+      discussions: write    # Create release announcement discussion
+    # The reusable workflow runs GoReleaser itself and uploads its dist dir as
+    # the `release-dist` artifact, which publish-plugin.yaml reuses so the hub
+    # attests the same bytes as the GitHub release.
+    uses: github-community-projects/ospo-reusable-workflows/.github/workflows/release.yaml@ee8277bd76ef808b3a6e0bdd1f5a46a520a12c5d # v2.3.1
+    with:
+      publish: true
+      release-config-name: release-drafter.yaml
+      goreleaser-config-path: .goreleaser.yaml
+      go-version-file: go.mod
+      create-attestation: true
+      # Only cut a release when a merged PR carries the 'release' label;
+      # workflow_dispatch still releases unconditionally.
+      release-only-with-label: true
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}

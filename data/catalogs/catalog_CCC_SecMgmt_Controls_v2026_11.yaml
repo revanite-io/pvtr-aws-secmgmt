@@ -1,0 +1,264 @@
+title: ""
+metadata:
+  id: CCC.SecMgmt.Controls
+  type: ControlCatalog
+  gemara-version: v1.5.0
+  version: v2026.11
+  description: Controls for Secret Management technologies, as defined by the FINOS Common Cloud Controls project.
+  author:
+    id: FINOS-CCC
+    name: FINOS Common Cloud Controls
+    type: Human
+  mapping-references:
+    - id: CCC.Core.Controls
+      title: CCC Core Controls
+      version: v2026.11
+      url: https://grc.store/finos-ccc/ccc.core.controls
+    - id: CCC.SecMgmt.Threats
+      title: CCC Secret Management Threats
+      version: v2026.11
+      url: https://grc.store/finos-ccc/ccc.secmgmt.threats
+    - id: NIST-CSF
+      title: NIST Cybersecurity Framework 1.1
+      version: "1.1"
+    - id: NIST_800_53
+      title: NIST SP 800-53 Rev. 5
+      version: Rev. 5
+    - id: CCC.Core.Threats
+      title: CCC Core Threats
+      version: v2026.11
+      url: https://grc.store/finos-ccc/ccc.core.threats
+  applicability-groups:
+    - id: tlp-amber
+      title: TLP:AMBER
+      description: Traffic Light Protocol sharing boundary TLP:AMBER.
+    - id: tlp-red
+      title: TLP:RED
+      description: Traffic Light Protocol sharing boundary TLP:RED.
+    - id: tlp-green
+      title: TLP:GREEN
+      description: Traffic Light Protocol sharing boundary TLP:GREEN.
+    - id: tlp-clear
+      title: TLP:CLEAR
+      description: Traffic Light Protocol sharing boundary TLP:CLEAR.
+controls:
+  - id: CCC.SecMgmt.CN01
+    title: Enforce Scheduled Secret Rotation
+    objective: |
+      Ensure that secrets are rotated on a defined schedule to
+      reduce the risk of secret compromise and unauthorized access.
+    group: Access
+    assessment-requirements:
+      - id: CCC.SecMgmt.CN01.AR01
+        text: |
+          When a secret is stored, a rotation schedule MUST be configured
+          with an interval of 90 days or less.
+        applicability:
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Configure the provider's rotation schedule on every secret. Where
+          the provider only publishes a rotation-due event, subscribe an
+          external rotation function to it. No provider enforces a secret
+          expiry on retrieval, so the schedule is the only control that
+          bounds a credential's lifetime.
+        state: Active
+      - id: CCC.SecMgmt.CN01.AR02
+        text: |
+          When a scheduled rotation has not produced a new secret version
+          within 24 hours of its due time, an alert MUST be published to a
+          monitored channel.
+        applicability:
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Alert on rotation-failure events from the rotation function and on
+          rotation-due events that are not followed by a version-created
+          event within the tolerance window. Where the provider has no
+          rotation schedule and only publishes a near-expiry event, treat the
+          expiry date as the due time and alert when no new version exists
+          24 hours before it.
+        state: Active
+    guidelines:
+      - entries:
+          - reference-id: PR.AC-1
+            remarks: Identities and credentials are issued, managed, verified, revoked, and audited
+        reference-id: NIST-CSF
+      - entries:
+          - reference-id: IA-5
+            remarks: Authenticator Management
+        reference-id: NIST_800_53
+    threats:
+      - entries:
+          - reference-id: CCC.SecMgmt.TH03
+            remarks: Secrets are Not Rotated or Rotation Fails
+        reference-id: CCC.SecMgmt.Threats
+    state: Active
+  - id: CCC.SecMgmt.CN03
+    title: Enforce Least-Privilege Access to Secret Values
+    objective: |
+      Ensure that only the identities that consume a secret can read its
+      value, and that an identity which only consumes a secret cannot
+      replace its value.
+    group: Access
+    assessment-requirements:
+      - id: CCC.SecMgmt.CN03.AR01
+        text: |
+          When a secret's access policy is configured, read permission on the
+          secret value MUST NOT be granted to a wildcard principal.
+        applicability:
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Review resource policies, vault access policies, and IAM bindings
+          for grants to all identities in the account or organization.
+        state: Active
+      - id: CCC.SecMgmt.CN03.AR02
+        text: |
+          When read permission on a secret value is granted, the grant MUST
+          be scoped to the specific secret, vault, or tag-scoped set of
+          secrets that the identity consumes.
+        applicability:
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Grant secret read permission per secret, per vault, or per tag
+          group rather than on all secrets in the account.
+        state: Active
+      - id: CCC.SecMgmt.CN03.AR03
+        text: |
+          When an identity is granted read permission on a secret value for
+          consumption by a workload, that grant MUST NOT include permission
+          to create a new version of the secret.
+        applicability:
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Give consuming workloads a read-only role. Rotation functions and
+          deployment pipelines may hold both read and write permission, since
+          a rotation function must read the current value to replace it.
+        state: Active
+    guidelines:
+      - entries:
+          - reference-id: PR.AC-4
+            remarks: Access permissions and authorizations are managed
+        reference-id: NIST-CSF
+      - entries:
+          - reference-id: AC-6
+            remarks: Least Privilege
+        reference-id: NIST_800_53
+    threats:
+      - entries:
+          - reference-id: CCC.SecMgmt.TH01
+            remarks: Secret Values are Exposed Outside the Service
+          - reference-id: CCC.SecMgmt.TH02
+            remarks: Secret Values are Replaced by Unauthorized Entities
+        reference-id: CCC.SecMgmt.Threats
+      - entries:
+          - reference-id: CCC.Core.TH01
+            remarks: Access is Granted to Unauthorized Users
+        reference-id: CCC.Core.Threats
+    state: Active
+  - id: CCC.SecMgmt.CN04
+    title: Protect Secret Versions from Premature Loss
+    objective: |
+      Ensure that a secret version cannot be destroyed before dependent
+      systems have moved off it, and that disabling or scheduling the
+      destruction of a version is observed.
+    group: Data
+    assessment-requirements:
+      - id: CCC.SecMgmt.CN04.AR01
+        text: |
+          When a secret or secret version is deleted, the service MUST retain
+          it in a recoverable state for at least 7 days before destruction.
+        applicability:
+          - tlp-clear
+          - tlp-green
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Set the deletion recovery window, soft-delete retention, or
+          version destroy TTL to 7 days or more and do not permit
+          force-delete without recovery. Providers differ in which half they
+          can meet: a secret-level recovery window exists on AWS (7-30 days)
+          and Azure (soft delete, 7-90 days) but not GCP, which deletes a
+          secret immediately; a version-level window exists on GCP (version
+          destroy TTL) and Azure but not AWS, which purges a deprecated
+          version without a recovery window. Assess each provider on the
+          half it offers.
+        state: Active
+      - id: CCC.SecMgmt.CN04.AR02
+        text: |
+          When a secret version is disabled or scheduled for destruction, an
+          alert MUST be published to a monitored channel.
+        applicability:
+          - tlp-amber
+          - tlp-red
+        recommendation: |
+          Subscribe the security team's alerting channel to the provider's
+          event stream for version disable, delete, and expiry events.
+        state: Active
+    guidelines:
+      - entries:
+          - reference-id: RS.AN-1
+            remarks: Notifications from detection systems are investigated
+        reference-id: NIST-CSF
+      - entries:
+          - reference-id: CP-10
+            remarks: System Recovery and Reconstitution
+          - reference-id: IR-5
+            remarks: Incident Monitoring
+        reference-id: NIST_800_53
+    threats:
+      - entries:
+          - reference-id: CCC.SecMgmt.TH04
+            remarks: Secret Versions are Disabled While Systems Still Depend on Them
+        reference-id: CCC.SecMgmt.Threats
+      - entries:
+          - reference-id: CCC.Core.TH06
+            remarks: Data is Lost or Corrupted
+        reference-id: CCC.Core.Threats
+    state: Active
+groups:
+  - id: Access
+    title: Access Control
+    description: |
+      The Access Control group covers entries related to authentication,
+      authorization, and trust perimeter enforcement. This includes
+      multi-factor authentication, least privilege access, network access
+      rules, and prevention of unauthorized access or reconnaissance.
+  - id: Data
+    title: Data Resilience
+    description: |
+      The Data Resilience group covers entries related to ensuring data
+      availability, integrity, and sovereignty across its lifecycle. This
+      includes replication, backup, recovery, region restrictions, and
+      protection against data loss or corruption.
+imports:
+  - entries:
+      - reference-id: CCC.Core.CN01
+        remarks: Encrypt Data for Transmission
+      - reference-id: CCC.Core.CN02
+        remarks: Encrypt Data for Storage
+      - reference-id: CCC.Core.CN03
+        remarks: Implement Multi-factor Authentication (MFA) for Access
+      - reference-id: CCC.Core.CN04
+        remarks: Log All Access and Changes
+      - reference-id: CCC.Core.CN05
+        remarks: Prevent Access from Untrusted Entities
+      - reference-id: CCC.Core.CN06
+        remarks: Restrict Deployments to Trust Perimeter
+      - reference-id: CCC.Core.CN07
+        remarks: Alert on Unusual Enumeration Activity
+      - reference-id: CCC.Core.CN08
+        remarks: Replicate Data to Multiple Locations
+      - reference-id: CCC.Core.CN09
+        remarks: Ensure Integrity of Access Logs
+      - reference-id: CCC.Core.CN10
+        remarks: Restrict Data Replication to Trust Perimeter
+      - reference-id: CCC.Core.CN11
+        remarks: Protect Encryption Keys
+      - reference-id: CCC.Core.CN16
+        remarks: Alert on Changes to Protective Configuration
+    reference-id: CCC.Core.Controls

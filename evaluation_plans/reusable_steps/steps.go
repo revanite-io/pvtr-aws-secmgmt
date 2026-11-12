@@ -1,0 +1,14 @@
+package reusable_steps
+
+import (
+	"github.com/gemaraproj/go-gemara"
+
+	"github.com/revanite-io/pvtr-aws-secmgmt/data"
+)
+
+// NotImplemented is a placeholder step. It reports NotRun so a requirement that
+// has not been implemented yet is visible in the results without counting as a
+// pass or a failure. Replace it with real steps.
+func NotImplemented(payload data.Payload) (result gemara.Result, message string, confidence gemara.ConfidenceLevel) {
+	return gemara.NotRun, "Not implemented", confidence
+}

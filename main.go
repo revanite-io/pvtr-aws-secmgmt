@@ -1,0 +1,87 @@
+package main
+
+import (
+	"embed"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/revanite-io/pvtr-aws-secmgmt/data"
+	"github.com/revanite-io/pvtr-aws-secmgmt/evaluation_plans"
+
+	"github.com/gemaraproj/go-gemara"
+
+	"github.com/privateerproj/privateer-sdk/command"
+	"github.com/privateerproj/privateer-sdk/config"
+	"github.com/privateerproj/privateer-sdk/pluginkit"
+	"github.com/privateerproj/privateer-sdk/shared"
+)
+
+var (
+	// Version is to be replaced at build time by the associated tag
+	Version = "0.0.0"
+	// VersionPostfix is a marker for the version such as "dev", "beta", "rc", etc.
+	VersionPostfix = "dev"
+	// GitCommitHash is the commit at build time
+	GitCommitHash = ""
+	// BuiltAt is the actual build datetime
+	BuiltAt = ""
+
+	PluginName = "pvtr-aws-secmgmt"
+	// RequiredVars are config vars the loader cannot run without. The SDK
+	// refuses to run when one is missing, so steps never see a partial payload.
+	RequiredVars = []string{}
+
+	//go:embed data/catalogs
+	files   embed.FS
+	dataDir = filepath.Join("data", "catalogs")
+)
+
+func main() {
+	if VersionPostfix != "" {
+		Version = fmt.Sprintf("%s-%s", Version, VersionPostfix)
+	}
+
+	orchestrator := &pluginkit.EvaluationOrchestrator{
+		PluginName:    PluginName,
+		PluginVersion: Version,
+		PluginUri:     "github.com/revanite-io/pvtr-aws-secmgmt",
+		// Publisher and License are inert at run time and required only to publish
+		// to grc.store: Publisher is your grc.store namespace, License an SPDX expression.
+		Publisher: "",
+		License:   "",
+	}
+	orchestrator.AddLoader(data.Loader)
+
+	// Identifies what was evaluated in the log's target field, e.g. from
+	// c.Vars. Any field left empty falls back to the service name.
+	orchestrator.AddTargetBuilder(func(c *config.Config) gemara.Resource {
+		return gemara.Resource{}
+	})
+
+	if err := orchestrator.AddReferenceCatalogs(dataDir, files); err != nil {
+		fmt.Printf("Error loading catalog: %v\n", err)
+		os.Exit(shared.InternalError)
+	}
+
+	orchestrator.AddRequiredVars(RequiredVars)
+
+	// Typed registration: the SDK asserts the payload type once and keeps each
+	// step's function name in the results, so steps need no payload guard.
+	if err := pluginkit.AddEvaluationSuiteTyped(orchestrator, "CCC.SecMgmt.Controls", nil, evaluation_plans.Suite_CCC_SecMgmt_Controls); err != nil {
+		fmt.Printf("Error adding evaluation suite: %v\n", err)
+		os.Exit(shared.InternalError)
+	}
+
+	runCmd := command.NewPluginCommands(
+		PluginName,
+		Version,
+		GitCommitHash,
+		BuiltAt,
+		orchestrator,
+	)
+
+	if err := runCmd.Execute(); err != nil {
+		os.Exit(shared.InternalError)
+	}
+}
